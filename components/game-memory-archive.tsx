@@ -24,475 +24,46 @@ interface GameMemory {
   windowType: "terminal" | "file" | "glitch" | "memory"
   memoryClarity: "vivid" | "faded" | "forgotten"
   isVisible?: boolean
+  metacritic?: number
+  platforms?: string[]
 }
 
-// Generate better positioned memories with NO overlapping guaranteed
-const generateMemoryPositions = () => {
-  const memories = [
-    {
-      id: "1",
-      title: "OMORI.exe",
-      status: "finished" as const,
-      personalNote: "dreams within dreams within dreams...",
-      addedOn: "2022-02-03T14:15:00",
-      year: 2020,
-      genre: "psychological_horror",
-      developer: "OMOCAT",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 280,
-      height: 200,
-      zIndex: 5,
-      windowType: "memory" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "2",
-      title: "detention_v1.2",
-      status: "finished" as const,
-      personalNote: "the weight of history in every pixel",
-      addedOn: "2024-01-28T11:20:00",
-      year: 2017,
-      genre: "horror",
-      developer: "Red Candle Games",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 260,
-      height: 180,
-      zIndex: 3,
-      windowType: "terminal" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "3",
-      title: "disco_elysium.dat",
-      status: "finished" as const,
-      personalNote: "what kind of cop are you?",
-      addedOn: "2023-06-10T21:15:00",
-      year: 2019,
-      genre: "rpg",
-      developer: "ZA/UM",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 300,
-      height: 220,
-      zIndex: 7,
-      windowType: "file" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "4",
-      title: "hollow_knight_backup",
-      status: "unfinished" as const,
-      personalNote: "lost in hallownest's depths...",
-      addedOn: "2023-12-20T19:45:00",
-      year: 2017,
-      genre: "metroidvania",
-      developer: "Team Cherry",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 240,
-      height: 160,
-      zIndex: 2,
-      windowType: "glitch" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "5",
-      title: "celeste.save",
-      status: "finished" as const,
-      personalNote: "climbing the mountain within",
-      addedOn: "2023-08-15T20:00:00",
-      year: 2018,
-      genre: "platformer",
-      developer: "Maddy Makes Games",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 270,
-      height: 190,
-      zIndex: 4,
-      windowType: "memory" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "6",
-      title: "outer_wilds.tmp",
-      status: "wishlist" as const,
-      personalNote: "waiting for the right moment...",
-      addedOn: "2024-02-01T10:00:00",
-      year: 2019,
-      genre: "exploration",
-      developer: "Mobius Digital",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 250,
-      height: 170,
-      zIndex: 1,
-      windowType: "terminal" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "7",
-      title: "hades_run.exe",
-      status: "finished" as const,
-      personalNote: "one more run... always one more run",
-      addedOn: "2023-05-12T16:30:00",
-      year: 2020,
-      genre: "roguelike",
-      developer: "Supergiant Games",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 260,
-      height: 180,
-      zIndex: 6,
-      windowType: "file" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "8",
-      title: "stardew_valley.farm",
-      status: "finished" as const,
-      personalNote: "peaceful mornings in pelican town",
-      addedOn: "2023-03-20T09:15:00",
-      year: 2016,
-      genre: "simulation",
-      developer: "ConcernedApe",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 280,
-      height: 200,
-      zIndex: 3,
-      windowType: "memory" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "9",
-      title: "undertale.sav",
-      status: "finished" as const,
-      personalNote: "determination fills you with... feelings",
-      addedOn: "2022-11-08T20:45:00",
-      year: 2015,
-      genre: "rpg",
-      developer: "Toby Fox",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 250,
-      height: 170,
-      zIndex: 2,
-      windowType: "terminal" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "10",
-      title: "spiritfarer.journey",
-      status: "finished" as const,
-      personalNote: "saying goodbye has never been so beautiful",
-      addedOn: "2023-07-14T18:20:00",
-      year: 2020,
-      genre: "adventure",
-      developer: "Thunder Lotus Games",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 290,
-      height: 210,
-      zIndex: 4,
-      windowType: "memory" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "11",
-      title: "a_short_hike.trail",
-      status: "finished" as const,
-      personalNote: "sometimes the smallest journeys...",
-      addedOn: "2023-04-02T14:10:00",
-      year: 2019,
-      genre: "adventure",
-      developer: "adamgryu",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 240,
-      height: 160,
-      zIndex: 1,
-      windowType: "file" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "12",
-      title: "night_in_woods.exe",
-      status: "finished" as const,
-      personalNote: "mae's story hit too close to home",
-      addedOn: "2022-09-18T21:30:00",
-      year: 2017,
-      genre: "adventure",
-      developer: "Infinite Fall",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 270,
-      height: 190,
-      zIndex: 5,
-      windowType: "memory" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "13",
-      title: "gris.art",
-      status: "finished" as const,
-      personalNote: "watercolor emotions",
-      addedOn: "2023-01-25T12:45:00",
-      year: 2018,
-      genre: "platformer",
-      developer: "Nomada Studio",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 250,
-      height: 170,
-      zIndex: 2,
-      windowType: "terminal" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "14",
-      title: "ori_blind_forest.light",
-      status: "finished" as const,
-      personalNote: "light in the darkness",
-      addedOn: "2022-12-03T19:20:00",
-      year: 2015,
-      genre: "metroidvania",
-      developer: "Moon Studios",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 260,
-      height: 180,
-      zIndex: 3,
-      windowType: "file" as const,
-      memoryClarity: "faded" as const,
-    },
-    {
-      id: "15",
-      title: "firewatch.tower",
-      status: "finished" as const,
-      personalNote: "conversations across the void",
-      addedOn: "2023-08-30T15:55:00",
-      year: 2016,
-      genre: "adventure",
-      developer: "Campo Santo",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 280,
-      height: 200,
-      zIndex: 4,
-      windowType: "memory" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "16",
-      title: "what_remains_edith.house",
-      status: "finished" as const,
-      personalNote: "family stories carved in wood and memory",
-      addedOn: "2023-02-14T17:40:00",
-      year: 2017,
-      genre: "adventure",
-      developer: "Giant Sparrow",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 290,
-      height: 210,
-      zIndex: 6,
-      windowType: "terminal" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "17",
-      title: "journey.sand",
-      status: "finished" as const,
-      personalNote: "wordless connection with strangers",
-      addedOn: "2022-07-22T13:25:00",
-      year: 2012,
-      genre: "adventure",
-      developer: "thatgamecompany",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 250,
-      height: 170,
-      zIndex: 1,
-      windowType: "file" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "18",
-      title: "inside.limbo",
-      status: "finished" as const,
-      personalNote: "wordless horror and beauty",
-      addedOn: "2023-06-05T20:15:00",
-      year: 2016,
-      genre: "puzzle_platformer",
-      developer: "Playdead",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 240,
-      height: 160,
-      zIndex: 2,
-      windowType: "glitch" as const,
-      memoryClarity: "vivid" as const,
-    },
-    {
-      id: "19",
-      title: "kentucky_route_zero.act",
-      status: "unfinished" as const,
-      personalNote: "magical realism in the american south",
-      addedOn: "2023-10-12T22:10:00",
-      year: 2013,
-      genre: "adventure",
-      developer: "Cardboard Computer",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 300,
-      height: 220,
-      zIndex: 7,
-      windowType: "memory" as const,
-      memoryClarity: "faded" as const,
-    },
-    {
-      id: "20",
-      title: "papers_please.checkpoint",
-      status: "finished" as const,
-      personalNote: "glory to arstotzka... the weight of small choices",
-      addedOn: "2022-05-18T16:50:00",
-      year: 2013,
-      genre: "simulation",
-      developer: "Lucas Pope",
-      coverUrl: "/placeholder.svg?height=300&width=200",
-      width: 270,
-      height: 190,
-      zIndex: 5,
-      windowType: "terminal" as const,
-      memoryClarity: "vivid" as const,
-    },
-  ]
-
-  // Sort by date - newest first (reverse chronological)
-  const sortedMemories = [...memories].sort((a, b) => new Date(b.addedOn).getTime() - new Date(a.addedOn).getTime())
-
-  const screenWidth = typeof window !== "undefined" ? window.innerWidth : 1400
-  const canvasWidth = screenWidth - 40
-  const padding = 20
-  const minGap = 20 // Increased gap for better separation
-
-  const positionedMemories: GameMemory[] = []
-
-  // Helper function to check if two rectangles overlap
-  const isOverlapping = (
-    x1: number,
-    y1: number,
-    w1: number,
-    h1: number,
-    x2: number,
-    y2: number,
-    w2: number,
-    h2: number,
-    gap: number,
-  ) => {
-    return !(
-      (
-        x1 + w1 + gap <= x2 || // rect1 is to the left of rect2
-        x2 + w2 + gap <= x1 || // rect2 is to the left of rect1
-        y1 + h1 + gap <= y2 || // rect1 is above rect2
-        y2 + h2 + gap <= y1
-      ) // rect2 is above rect1
-    )
-  }
-
-  // Improved positioning with guaranteed no overlaps
-  for (let i = 0; i < sortedMemories.length; i++) {
-    const memory = sortedMemories[i]
-    let positioned = false
-    let attempts = 0
-    const maxAttempts = 300
-
-    // Calculate preferred Y based on chronological order (newer games higher up)
-    const baseY = Math.floor(i / 3) * 280 + padding + 80 // 3 games per row roughly, more vertical space
-    const yVariation = 80 // Allow some vertical variation
-
-    while (!positioned && attempts < maxAttempts) {
-      const x = Math.random() * (canvasWidth - memory.width - padding * 2) + padding
-      const y = Math.max(baseY + (Math.random() - 0.5) * yVariation, padding + 80)
-
-      // Check for overlaps with ALL existing games
-      let hasOverlap = false
-      for (const existing of positionedMemories) {
-        if (
-          isOverlapping(
-            x,
-            y,
-            memory.width,
-            memory.height,
-            existing.x,
-            existing.y,
-            existing.width,
-            existing.height,
-            minGap,
-          )
-        ) {
-          hasOverlap = true
-          break
-        }
-      }
-
-      if (!hasOverlap) {
-        positionedMemories.push({
-          ...memory,
-          x,
-          y,
-          isVisible: true,
-        })
-        positioned = true
-      }
-
-      attempts++
-    }
-
-    // Guaranteed fallback - use a reliable grid system
-    if (!positioned) {
-      const cols = Math.floor(canvasWidth / 350) // Wider columns to prevent overlap
-      const col = i % cols
-      const row = Math.floor(i / cols)
-
-      let gridX = col * 350 + padding
-      let gridY = row * 280 + padding + 80
-
-      // Make sure grid position doesn't overlap either
-      let gridAttempts = 0
-      while (gridAttempts < 50) {
-        let gridHasOverlap = false
-        for (const existing of positionedMemories) {
-          if (
-            isOverlapping(
-              gridX,
-              gridY,
-              memory.width,
-              memory.height,
-              existing.x,
-              existing.y,
-              existing.width,
-              existing.height,
-              minGap,
-            )
-          ) {
-            gridHasOverlap = true
-            break
-          }
-        }
-
-        if (!gridHasOverlap) {
-          break
-        }
-
-        // Try next grid position
-        gridX += 350
-        if (gridX + memory.width > canvasWidth - padding) {
-          gridX = padding
-          gridY += 280
-        }
-        gridAttempts++
-      }
-
-      positionedMemories.push({
-        ...memory,
-        x: gridX,
-        y: gridY,
-        isVisible: true,
-      })
-    }
-  }
-
-  return positionedMemories
+interface RAWGGame {
+  id: number
+  name: string
+  released: string
+  background_image: string
+  genres: string[]
+  developers: string[]
+  metacritic: number
+  description: string
+  platforms: string[]
 }
 
-const sampleMemories = generateMemoryPositions()
+// Load games from localStorage
+const loadGamesFromStorage = (): GameMemory[] => {
+  if (typeof window === "undefined") return []
+  try {
+    const saved = localStorage.getItem("gamelog-memories")
+    return saved ? JSON.parse(saved) : []
+  } catch (error) {
+    console.error("Error loading games from storage:", error)
+    return []
+  }
+}
+
+// Save games to localStorage
+const saveGamesToStorage = (games: GameMemory[]) => {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem("gamelog-memories", JSON.stringify(games))
+  } catch (error) {
+    console.error("Error saving games to storage:", error)
+  }
+}
 
 export function GameMemoryArchive() {
-  const [memories, setMemories] = useState<GameMemory[]>(sampleMemories)
+  const [memories, setMemories] = useState<GameMemory[]>([])
   const [isBooting, setIsBooting] = useState(true)
   const [bootText, setBootText] = useState("")
   const [commandMode, setCommandMode] = useState(false)
@@ -509,7 +80,24 @@ export function GameMemoryArchive() {
     status: "unfinished" as "finished" | "unfinished" | "wishlist",
     personalNote: "",
   })
+  const [gameSearchQuery, setGameSearchQuery] = useState("")
+  const [gameSearchResults, setGameSearchResults] = useState<RAWGGame[]>([])
+  const [isSearchingGames, setIsSearchingGames] = useState(false)
+  const [selectedGameData, setSelectedGameData] = useState<RAWGGame | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Load games from localStorage on mount
+  useEffect(() => {
+    const savedGames = loadGamesFromStorage()
+    setMemories(savedGames)
+  }, [])
+
+  // Save games to localStorage whenever memories change
+  useEffect(() => {
+    if (memories.length > 0) {
+      saveGamesToStorage(memories)
+    }
+  }, [memories])
 
   // Debounce search query to prevent glitches when typing fast
   useEffect(() => {
@@ -600,21 +188,116 @@ export function GameMemoryArchive() {
     }
   }, [commandInput, commandMode])
 
+  // Search for games using RAWG API
+  const searchGames = async (query: string) => {
+    if (!query.trim()) {
+      setGameSearchResults([])
+      return
+    }
+
+    setIsSearchingGames(true)
+    try {
+      const response = await fetch(`/api/games/search?q=${encodeURIComponent(query)}`)
+      const data = await response.json()
+
+      if (data.results) {
+        setGameSearchResults(data.results)
+      } else {
+        setGameSearchResults([])
+      }
+    } catch (error) {
+      console.error("Error searching games:", error)
+      setGameSearchResults([])
+    } finally {
+      setIsSearchingGames(false)
+    }
+  }
+
+  // Debounced game search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (gameSearchQuery) {
+        searchGames(gameSearchQuery)
+      } else {
+        setGameSearchResults([])
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [gameSearchQuery])
+
+  const selectGameFromSearch = (game: RAWGGame) => {
+    setSelectedGameData(game)
+    setNewMemory({
+      title: game.name,
+      status: "unfinished",
+      personalNote: "",
+    })
+    setGameSearchResults([])
+    setGameSearchQuery("")
+  }
+
+  // Improved random positioning with better collision detection
+  const findRandomPosition = (gameWidth: number, gameHeight: number, existingGames: GameMemory[]) => {
+    const screenWidth = typeof window !== "undefined" ? window.innerWidth : 1400
+    const canvasWidth = screenWidth - 40
+    const padding = 20
+    const minGap = 40 // Minimum gap between games
+
+    const maxAttempts = 200
+    let attempts = 0
+
+    while (attempts < maxAttempts) {
+      // Generate random position
+      const x = padding + Math.random() * (canvasWidth - gameWidth - padding * 2)
+      const y = padding + 80 + Math.random() * 800 // Random Y with some vertical spread
+
+      // Check for overlaps with existing games
+      let hasOverlap = false
+      for (const existing of existingGames) {
+        const dx = Math.abs(x - existing.x)
+        const dy = Math.abs(y - existing.y)
+        const minDistanceX = (gameWidth + existing.width) / 2 + minGap
+        const minDistanceY = (gameHeight + existing.height) / 2 + minGap
+
+        if (dx < minDistanceX && dy < minDistanceY) {
+          hasOverlap = true
+          break
+        }
+      }
+
+      if (!hasOverlap) {
+        return { x, y }
+      }
+
+      attempts++
+    }
+
+    // Fallback: place it in a safe area at the bottom
+    const fallbackY = Math.max(400, ...existingGames.map((g) => g.y + g.height + 50))
+    return {
+      x: padding + Math.random() * (canvasWidth - gameWidth - padding * 2),
+      y: fallbackY,
+    }
+  }
+
   useEffect(() => {
     if (isBooting) {
       const bootSequence = [
         "Devcat/Gamelog.exe",
         "",
-        "MEMORY_ARCHIVE_OS v2.1.5",
+        "MEMORY_ARCHIVE_OS v2.3.0",
         "Initializing neural pathways...",
         "Loading game memories...",
         "Mounting nostalgia drive...",
+        "Connecting to RAWG database...",
+        "Restoring from local storage...",
         "Scanning memory fragments...",
-        `Found ${memories.length} game files`,
-        "Optimizing chronological layout...",
+        memories.length > 0 ? `Found ${memories.length} game files` : "Archive initialized - ready for new memories",
+        "Optimizing random layout...",
         "Boot complete. Welcome to your archive.",
         "",
-        "CTRL+K for commands",
+        "CTRL+K for commands | //add to start",
       ]
 
       let currentLine = 0
@@ -645,6 +328,8 @@ export function GameMemoryArchive() {
         setIsEditingMemory(false)
         setSearchQuery("")
         setCommandInput("")
+        setGameSearchResults([])
+        setSelectedGameData(null)
       }
       if (e.ctrlKey && e.key === "k") {
         e.preventDefault()
@@ -685,55 +370,74 @@ export function GameMemoryArchive() {
 
   const handleAddMemory = () => {
     if (newMemory.title.trim()) {
-      const screenWidth = typeof window !== "undefined" ? window.innerWidth : 1400
-      const canvasWidth = screenWidth - 40
-      const padding = 20
+      const gameWidth = 280
+      const gameHeight = 200
 
-      // Place new games at the TOP (newest first)
+      // Use selected game data if available
+      const gameData = selectedGameData
+      const releaseYear = gameData?.released ? new Date(gameData.released).getFullYear() : 2024
+
+      // Find random position that doesn't overlap
+      const { x, y } = findRandomPosition(gameWidth, gameHeight, memories)
+
+      // Create new memory with random position
       const memory: GameMemory = {
         id: Date.now().toString(),
         title: newMemory.title,
         status: newMemory.status,
         personalNote: newMemory.personalNote,
         addedOn: new Date().toISOString(),
-        year: 2024,
-        genre: "unknown",
-        developer: "Unknown",
-        coverUrl: "/placeholder.svg?height=300&width=200",
-        x: Math.random() * (canvasWidth - 280 - padding * 2) + padding,
-        y: padding + 80 + Math.random() * 100, // Place at top area
-        width: 280,
-        height: 200,
+        year: releaseYear,
+        genre: gameData?.genres?.[0] || "unknown",
+        developer: gameData?.developers?.[0] || "Unknown",
+        coverUrl: gameData?.background_image || "/placeholder.svg?height=300&width=200",
+        metacritic: gameData?.metacritic,
+        platforms: gameData?.platforms,
+        x,
+        y,
+        width: gameWidth,
+        height: gameHeight,
         zIndex: memories.length + 1,
-        windowType: "file",
+        windowType: ["terminal", "file", "glitch", "memory"][Math.floor(Math.random() * 4)] as any, // Random window type
         memoryClarity: "vivid",
         isVisible: true,
       }
 
-      // Add to beginning of array (newest first)
-      setMemories([memory, ...memories])
+      // Add to beginning of array (newest first) and trigger animation
+      const newMemories = [memory, ...memories]
+      setMemories(newMemories)
       setNewMemory({ title: "", status: "unfinished", personalNote: "" })
+      setSelectedGameData(null)
       setIsAddingMemory(false)
+
+      // Scroll to the new game after a brief delay
+      setTimeout(() => {
+        if (containerRef.current) {
+          containerRef.current.scrollTo({
+            top: Math.max(0, y - 100),
+            behavior: "smooth",
+          })
+        }
+      }, 100)
     }
   }
 
   const handleEditMemory = () => {
     if (editingMemory.id) {
-      setMemories(
-        memories.map((memory) =>
-          memory.id === editingMemory.id
-            ? {
-                ...memory,
-                status: editingMemory.status || memory.status,
-                personalNote: editingMemory.personalNote || memory.personalNote,
-                title: editingMemory.title || memory.title,
-                genre: editingMemory.genre || memory.genre,
-                developer: editingMemory.developer || memory.developer,
-                year: editingMemory.year || memory.year,
-              }
-            : memory,
-        ),
+      const updatedMemories = memories.map((memory) =>
+        memory.id === editingMemory.id
+          ? {
+              ...memory,
+              status: editingMemory.status || memory.status,
+              personalNote: editingMemory.personalNote || memory.personalNote,
+              title: editingMemory.title || memory.title,
+              genre: editingMemory.genre || memory.genre,
+              developer: editingMemory.developer || memory.developer,
+              year: editingMemory.year || memory.year,
+            }
+          : memory,
       )
+      setMemories(updatedMemories)
       setIsEditingMemory(false)
       setEditingMemory({})
       setPopupMemory(null)
@@ -769,6 +473,9 @@ export function GameMemoryArchive() {
         break
     }
 
+    // Check if this is a newly added game (within last 2 seconds)
+    const isNewlyAdded = new Date().getTime() - new Date(memory.addedOn).getTime() < 2000
+
     return {
       position: "absolute" as const,
       left: `${memory.x}px`,
@@ -778,13 +485,15 @@ export function GameMemoryArchive() {
       zIndex: memory.zIndex,
       opacity,
       filter,
-      transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+      transition: "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
       transform: memory.isVisible ? "translateZ(0) scale(1)" : "translateZ(0) scale(0.95)",
       pointerEvents: memory.isVisible ? "auto" : "none",
       userSelect: "none",
       WebkitUserSelect: "none",
       MozUserSelect: "none",
       msUserSelect: "none",
+      // Add special animation for newly added games
+      animation: isNewlyAdded ? "gameAppear 0.8s cubic-bezier(0.4, 0, 0.2, 1)" : undefined,
     }
   }
 
@@ -961,6 +670,7 @@ export function GameMemoryArchive() {
                       "{memory.personalNote.substring(0, 30)}..."
                     </div>
                   )}
+                  {memory.metacritic && <div className="text-xs opacity-50">Score: {memory.metacritic}</div>}
                 </div>
               </div>
             </div>
@@ -1025,6 +735,10 @@ export function GameMemoryArchive() {
                   {popupMemory.year && <div>YEAR: {popupMemory.year}</div>}
                   {popupMemory.genre && <div>GENRE: {popupMemory.genre.toUpperCase().replace(/_/g, " ")}</div>}
                   {popupMemory.developer && <div>DEVELOPER: {popupMemory.developer}</div>}
+                  {popupMemory.metacritic && <div>METACRITIC: {popupMemory.metacritic}/100</div>}
+                  {popupMemory.platforms && popupMemory.platforms.length > 0 && (
+                    <div>PLATFORMS: {popupMemory.platforms.slice(0, 3).join(", ")}</div>
+                  )}
                 </div>
               </div>
 
@@ -1040,7 +754,7 @@ export function GameMemoryArchive() {
               <div className="flex justify-between pt-4 border-t border-current/30">
                 <button
                   onClick={() => startEditingMemory(popupMemory)}
-                  className="px-4 py-2 border border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/20 transition-all duration-200 hover:scale-105"
+                  className="px-4 py-2 border border-green-500/50 text-green-400 hover:bg-green-500/20 transition-all duration-200 hover:scale-105"
                 >
                   EDIT
                 </button>
@@ -1059,8 +773,8 @@ export function GameMemoryArchive() {
       {/* Edit Memory Dialog */}
       {isEditingMemory && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-in fade-in duration-300">
-          <div className="bg-black/95 border-2 border-yellow-500/50 text-yellow-400 font-mono w-[600px] max-w-[90vw] max-h-[90vh] overflow-auto animate-in zoom-in-95 duration-300">
-            <div className="border-b border-yellow-500/30 p-3 text-sm flex justify-between items-center">
+          <div className="bg-black/95 border-2 border-green-500/50 text-green-400 font-mono w-[600px] max-w-[90vw] max-h-[90vh] overflow-auto animate-in zoom-in-95 duration-300">
+            <div className="border-b border-green-500/30 p-3 text-sm flex justify-between items-center">
               <span>EDIT_MEMORY_FILE</span>
               <button
                 onClick={() => setIsEditingMemory(false)}
@@ -1076,7 +790,7 @@ export function GameMemoryArchive() {
                 <Input
                   value={editingMemory.title || ""}
                   onChange={(e) => setEditingMemory({ ...editingMemory, title: e.target.value })}
-                  className="bg-transparent border border-yellow-500/30 text-yellow-400 font-mono mt-1 transition-all duration-200 focus:border-yellow-400/70"
+                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
                 />
               </div>
               <div>
@@ -1084,7 +798,7 @@ export function GameMemoryArchive() {
                 <select
                   value={editingMemory.status || "unfinished"}
                   onChange={(e) => setEditingMemory({ ...editingMemory, status: e.target.value as any })}
-                  className="w-full bg-black border border-yellow-500/30 text-yellow-400 font-mono p-2 mt-1 transition-all duration-200 focus:border-yellow-400/70"
+                  className="w-full bg-black border border-green-500/30 text-green-400 font-mono p-2 mt-1 transition-all duration-200 focus:border-green-400/70"
                 >
                   <option value="unfinished">UNFINISHED</option>
                   <option value="finished">FINISHED</option>
@@ -1096,7 +810,7 @@ export function GameMemoryArchive() {
                 <Input
                   value={editingMemory.genre || ""}
                   onChange={(e) => setEditingMemory({ ...editingMemory, genre: e.target.value })}
-                  className="bg-transparent border border-yellow-500/30 text-yellow-400 font-mono mt-1 transition-all duration-200 focus:border-yellow-400/70"
+                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
                   placeholder="e.g. horror, rpg, platformer"
                 />
               </div>
@@ -1105,7 +819,7 @@ export function GameMemoryArchive() {
                 <Input
                   value={editingMemory.developer || ""}
                   onChange={(e) => setEditingMemory({ ...editingMemory, developer: e.target.value })}
-                  className="bg-transparent border border-yellow-500/30 text-yellow-400 font-mono mt-1 transition-all duration-200 focus:border-yellow-400/70"
+                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
                   placeholder="Game developer"
                 />
               </div>
@@ -1115,7 +829,7 @@ export function GameMemoryArchive() {
                   type="number"
                   value={editingMemory.year || ""}
                   onChange={(e) => setEditingMemory({ ...editingMemory, year: Number.parseInt(e.target.value) })}
-                  className="bg-transparent border border-yellow-500/30 text-yellow-400 font-mono mt-1 transition-all duration-200 focus:border-yellow-400/70"
+                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
                   placeholder="Release year"
                 />
               </div>
@@ -1124,7 +838,7 @@ export function GameMemoryArchive() {
                 <Textarea
                   value={editingMemory.personalNote || ""}
                   onChange={(e) => setEditingMemory({ ...editingMemory, personalNote: e.target.value })}
-                  className="bg-transparent border border-yellow-500/30 text-yellow-400 font-mono mt-1 resize-none transition-all duration-200 focus:border-yellow-400/70"
+                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 resize-none transition-all duration-200 focus:border-green-400/70"
                   rows={3}
                   placeholder="// personal memory or note..."
                 />
@@ -1132,7 +846,7 @@ export function GameMemoryArchive() {
               <div className="flex gap-2 pt-2">
                 <Button
                   onClick={handleEditMemory}
-                  className="bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/30 font-mono transition-all duration-200 hover:scale-105"
+                  className="bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 font-mono transition-all duration-200 hover:scale-105"
                 >
                   SAVE_CHANGES
                 </Button>
@@ -1151,9 +865,58 @@ export function GameMemoryArchive() {
 
       {/* Add Memory Dialog */}
       <Dialog open={isAddingMemory} onOpenChange={setIsAddingMemory}>
-        <DialogContent className="bg-black/95 border-2 border-green-500/50 text-green-400 font-mono animate-in zoom-in-95 duration-300">
+        <DialogContent className="bg-black/95 border-2 border-green-500/50 text-green-400 font-mono animate-in zoom-in-95 duration-300 max-w-2xl">
           <div className="space-y-4">
             <div className="text-sm border-b border-green-500/30 pb-2">CREATE_NEW_MEMORY_FILE</div>
+
+            {/* Game Search */}
+            <div>
+              <label className="text-xs opacity-80">SEARCH_RAWG_DATABASE:</label>
+              <div className="relative">
+                <Input
+                  value={gameSearchQuery}
+                  onChange={(e) => setGameSearchQuery(e.target.value)}
+                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
+                  placeholder="search for game..."
+                />
+                {isSearchingGames && (
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin w-4 h-4 border border-green-400 border-t-transparent rounded-full"></div>
+                  </div>
+                )}
+              </div>
+
+              {/* Search Results */}
+              {gameSearchResults.length > 0 && (
+                <div className="mt-2 border border-green-500/30 bg-black/80 max-h-48 overflow-y-auto">
+                  {gameSearchResults.map((game) => (
+                    <div
+                      key={game.id}
+                      onClick={() => selectGameFromSearch(game)}
+                      className="p-2 hover:bg-green-500/20 cursor-pointer border-b border-green-500/20 last:border-b-0"
+                    >
+                      <div className="flex gap-3">
+                        <img
+                          src={game.background_image || "/placeholder.svg"}
+                          alt={game.name}
+                          className="w-12 h-16 object-cover border border-green-500/30"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-bold">{game.name}</div>
+                          <div className="text-xs opacity-70">
+                            {game.released && new Date(game.released).getFullYear()} •{" "}
+                            {game.genres.slice(0, 2).join(", ")}
+                          </div>
+                          <div className="text-xs opacity-50">{game.developers.slice(0, 1).join(", ")}</div>
+                          {game.metacritic && <div className="text-xs opacity-60">Score: {game.metacritic}</div>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div>
               <label className="text-xs opacity-80">FILENAME:</label>
               <Input
@@ -1163,6 +926,29 @@ export function GameMemoryArchive() {
                 placeholder="game_title.exe"
               />
             </div>
+
+            {selectedGameData && (
+              <div className="border border-green-500/30 p-3 bg-green-500/10">
+                <div className="text-xs opacity-80 mb-2">SELECTED_GAME_DATA:</div>
+                <div className="flex gap-3">
+                  <img
+                    src={selectedGameData.background_image || "/placeholder.svg"}
+                    alt={selectedGameData.name}
+                    className="w-16 h-20 object-cover border border-green-500/30"
+                  />
+                  <div className="text-xs space-y-1">
+                    <div>
+                      <strong>{selectedGameData.name}</strong>
+                    </div>
+                    <div>Released: {selectedGameData.released}</div>
+                    <div>Genre: {selectedGameData.genres.slice(0, 2).join(", ")}</div>
+                    <div>Developer: {selectedGameData.developers.slice(0, 1).join(", ")}</div>
+                    {selectedGameData.metacritic && <div>Score: {selectedGameData.metacritic}/100</div>}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="text-xs opacity-80">STATUS:</label>
               <select
@@ -1195,7 +981,12 @@ export function GameMemoryArchive() {
               <Button
                 variant="ghost"
                 className="border border-red-500/50 text-red-400 hover:bg-red-500/20 font-mono transition-all duration-200 hover:scale-105"
-                onClick={() => setIsAddingMemory(false)}
+                onClick={() => {
+                  setIsAddingMemory(false)
+                  setSelectedGameData(null)
+                  setGameSearchResults([])
+                  setGameSearchQuery("")
+                }}
               >
                 CANCEL
               </Button>

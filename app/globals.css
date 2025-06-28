@@ -312,3 +312,19 @@ select {
 .crt-flicker {
   animation: crt-flicker 0.15s infinite;
 }
+
+/* Game appear animation for newly added games */
+@keyframes gameAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-5px) scale(1.02);
+  }
+  100% {
+    opacity: 0.95;
+    transform: translateY(0) scale(1);
+  }
+}
