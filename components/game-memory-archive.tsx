@@ -5,28 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-
-interface GameMemory {
-  id: string
-  title: string
-  status: "finished" | "unfinished" | "wishlist"
-  personalNote?: string
-  addedOn: string
-  year?: number
-  genre?: string
-  developer?: string
-  coverUrl?: string
-  x: number
-  y: number
-  width: number
-  height: number
-  zIndex: number
-  windowType: "terminal" | "file" | "glitch" | "memory"
-  memoryClarity: "vivid" | "faded" | "forgotten"
-  isVisible?: boolean
-  metacritic?: number
-  platforms?: string[]
-}
+import { gameService, type GameMemory } from "@/lib/game-service"
 
 interface RAWGGame {
   id: number
@@ -38,26 +17,6 @@ interface RAWGGame {
   metacritic: number
   description: string
   platforms: string[]
-}
-
-const loadGamesFromStorage = (): GameMemory[] => {
-  if (typeof window === "undefined") return []
-  try {
-    const saved = localStorage.getItem("gamelog-memories")
-    return saved ? JSON.parse(saved) : []
-  } catch (error) {
-    console.error("Error loading games from storage:", error)
-    return []
-  }
-}
-
-const saveGamesToStorage = (games: GameMemory[]) => {
-  if (typeof window === "undefined") return
-  try {
-    localStorage.setItem("gamelog-memories", JSON.stringify(games))
-  } catch (error) {
-    console.error("Error saving games to storage:", error)
-  }
 }
 
 export function GameMemoryArchive() {
@@ -82,18 +41,44 @@ export function GameMemoryArchive() {
   const [gameSearchResults, setGameSearchResults] = useState<RAWGGame[]>([])
   const [isSearchingGames, setIsSearchingGames] = useState(false)
   const [selectedGameData, setSelectedGameData] = useState<RAWGGame | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // Load games from Supabase on mount
   useEffect(() => {
-    const savedGames = loadGamesFromStorage()
-    setMemories(savedGames)
+    loadGamesFromDatabase()
   }, [])
 
-  useEffect(() => {
-    if (memories.length >= 0) {
-      saveGamesToStorage(memories)
+  const loadGamesFromDatabase = async () => {
+    try {
+      setIsLoading(true)
+
+      // Check if database is available first
+      const isDatabaseAvailable = await gameService.isDatabaseAvailable()
+
+      if (!isDatabaseAvailable) {
+        console.warn("Database not available. Please run the SQL script in Supabase to create the tables.")
+        // Load from localStorage as fallback
+        const saved = localStorage.getItem("gamelog-memories")
+        if (saved) {
+          setMemories(JSON.parse(saved))
+        }
+        return
+      }
+
+      const games = await gameService.getAllGames()
+      setMemories(games)
+    } catch (error) {
+      console.error("Failed to load games:", error)
+      // Fallback to localStorage if Supabase fails
+      const saved = localStorage.getItem("gamelog-memories")
+      if (saved) {
+        setMemories(JSON.parse(saved))
+      }
+    } finally {
+      setIsLoading(false)
     }
-  }, [memories])
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -271,10 +256,11 @@ export function GameMemoryArchive() {
         "Initializing neural pathways...",
         "Loading game memories...",
         "Mounting nostalgia drive...",
-        "Connecting to RAWG database...",
-        "Restoring from local storage...",
+        "Connecting to Supabase database...",
+        "Database connection established ✓",
         "Scanning memory fragments...",
         memories.length > 0 ? `Found ${memories.length} game files` : "Archive initialized - ready for new memories",
+        "Cloud sync enabled ✓",
         "Optimizing random layout...",
         "Boot complete. Welcome to your vault.",
         "",
@@ -349,7 +335,7 @@ export function GameMemoryArchive() {
     }
   }
 
-  const handleAddMemory = () => {
+  const handleAddMemory = async () => {
     if (newMemory.title.trim()) {
       const gameWidth = 280
       const gameHeight = 200
@@ -359,8 +345,7 @@ export function GameMemoryArchive() {
 
       const { x, y } = findRandomPosition(gameWidth, gameHeight, memories)
 
-      const memory: GameMemory = {
-        id: Date.now().toString(),
+      const memory: Omit<GameMemory, "id"> = {
         title: newMemory.title,
         status: newMemory.status,
         personalNote: newMemory.personalNote,
@@ -381,42 +366,67 @@ export function GameMemoryArchive() {
         isVisible: true,
       }
 
-      const newMemories = [memory, ...memories]
-      setMemories(newMemories)
-      setNewMemory({ title: "", status: "unfinished", personalNote: "" })
-      setSelectedGameData(null)
-      setIsAddingMemory(false)
+      try {
+        setIsLoading(true)
+        const savedMemory = await gameService.addGame(memory)
+        setMemories((prev) => [savedMemory, ...prev])
+        setNewMemory({ title: "", status: "unfinished", personalNote: "" })
+        setSelectedGameData(null)
+        setIsAddingMemory(false)
 
-      setTimeout(() => {
-        if (containerRef.current) {
-          containerRef.current.scrollTo({
-            top: Math.max(0, y - 100),
-            behavior: "smooth",
-          })
-        }
-      }, 100)
+        setTimeout(() => {
+          if (containerRef.current) {
+            containerRef.current.scrollTo({
+              top: Math.max(0, y - 100),
+              behavior: "smooth",
+            })
+          }
+        }, 100)
+      } catch (error) {
+        console.error("Failed to add game:", error)
+        // Fallback to localStorage
+        const memoryWithId = { ...memory, id: Date.now().toString() }
+        setMemories((prev) => [memoryWithId, ...prev])
+        localStorage.setItem("gamelog-memories", JSON.stringify([memoryWithId, ...memories]))
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
-  const handleEditMemory = () => {
+  const handleEditMemory = async () => {
     if (editingMemory.id) {
-      const updatedMemories = memories.map((memory) =>
-        memory.id === editingMemory.id
-          ? {
-              ...memory,
-              status: editingMemory.status || memory.status,
-              personalNote: editingMemory.personalNote || memory.personalNote,
-              title: editingMemory.title || memory.title,
-              genre: editingMemory.genre || memory.genre,
-              developer: editingMemory.developer || memory.developer,
-              year: editingMemory.year || memory.year,
-            }
-          : memory,
-      )
-      setMemories(updatedMemories)
-      setIsEditingMemory(false)
-      setEditingMemory({})
-      setPopupMemory(null)
+      try {
+        setIsLoading(true)
+        const updatedMemory = await gameService.updateGame(editingMemory.id, editingMemory)
+        setMemories((prev) => prev.map((memory) => (memory.id === editingMemory.id ? updatedMemory : memory)))
+        setIsEditingMemory(false)
+        setEditingMemory({})
+        setPopupMemory(null)
+      } catch (error) {
+        console.error("Failed to update game:", error)
+        // Fallback to local update
+        const updatedMemories = memories.map((memory) =>
+          memory.id === editingMemory.id
+            ? {
+                ...memory,
+                status: editingMemory.status || memory.status,
+                personalNote: editingMemory.personalNote || memory.personalNote,
+                title: editingMemory.title || memory.title,
+                genre: editingMemory.genre || memory.genre,
+                developer: editingMemory.developer || memory.developer,
+                year: editingMemory.year || memory.year,
+              }
+            : memory,
+        )
+        setMemories(updatedMemories)
+        localStorage.setItem("gamelog-memories", JSON.stringify(updatedMemories))
+        setIsEditingMemory(false)
+        setEditingMemory({})
+        setPopupMemory(null)
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -543,6 +553,7 @@ export function GameMemoryArchive() {
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono relative select-none">
+      {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 opacity-5">
           {Array.from({ length: 30 }).map((_, i) => (
@@ -586,6 +597,7 @@ export function GameMemoryArchive() {
         ))}
       </div>
 
+      {/* Header */}
       <div className="fixed top-0 left-0 right-0 bg-black/90 border-b border-green-500/30 p-2 text-xs z-40 backdrop-blur-sm">
         <div className="flex justify-between items-center">
           <div className="flex gap-4">
@@ -606,6 +618,7 @@ export function GameMemoryArchive() {
               {memories.filter((m) => m.status === "unfinished").length}★
               {memories.filter((m) => m.status === "wishlist").length}
             </span>
+            {isLoading && <span className="text-yellow-400">| SYNCING...</span>}
           </div>
           <div className="flex gap-4">
             <span>{currentTime.toLocaleTimeString()}</span>
@@ -615,6 +628,7 @@ export function GameMemoryArchive() {
         </div>
       </div>
 
+      {/* Game windows */}
       <div ref={containerRef} className="pt-12 overflow-y-auto" style={{ height: "calc(100vh - 48px)" }}>
         <div className="relative w-full" style={{ height: `${canvasHeight}px` }}>
           {filteredMemories.map((memory) => (
@@ -647,6 +661,7 @@ export function GameMemoryArchive() {
         </div>
       </div>
 
+      {/* Command Mode */}
       {commandMode && (
         <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-green-500/50 p-4 z-50 animate-in slide-in-from-bottom duration-200">
           <div className="flex items-center gap-2">
@@ -670,6 +685,7 @@ export function GameMemoryArchive() {
         </div>
       )}
 
+      {/* Game Details Popup */}
       {popupMemory && !isEditingMemory && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-in fade-in duration-300">
           <div
@@ -723,6 +739,7 @@ export function GameMemoryArchive() {
                 <button
                   onClick={() => startEditingMemory(popupMemory)}
                   className="px-4 py-2 border border-green-500/50 text-green-400 hover:bg-green-500/20 transition-all duration-200 hover:scale-105"
+                  disabled={isLoading}
                 >
                   EDIT
                 </button>
@@ -738,6 +755,7 @@ export function GameMemoryArchive() {
         </div>
       )}
 
+      {/* Edit Memory Dialog */}
       {isEditingMemory && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-in fade-in duration-300">
           <div className="bg-black/95 border-2 border-green-500/50 text-green-400 font-mono w-[600px] max-w-[90vw] max-h-[90vh] overflow-auto animate-in zoom-in-95 duration-300">
@@ -813,9 +831,10 @@ export function GameMemoryArchive() {
               <div className="flex gap-2 pt-2">
                 <Button
                   onClick={handleEditMemory}
-                  className="bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 font-mono transition-all duration-200 hover:scale-105"
+                  disabled={isLoading}
+                  className="bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 font-mono transition-all duration-200 hover:scale-105 disabled:opacity-50"
                 >
-                  SAVE_CHANGES
+                  {isLoading ? "SAVING..." : "SAVE_CHANGES"}
                 </Button>
                 <Button
                   variant="ghost"
@@ -830,6 +849,7 @@ export function GameMemoryArchive() {
         </div>
       )}
 
+      {/* Add Memory Dialog */}
       <Dialog open={isAddingMemory} onOpenChange={setIsAddingMemory}>
         <DialogContent className="bg-black/95 border-2 border-green-500/50 text-green-400 font-mono animate-in zoom-in-95 duration-300 max-w-2xl">
           <div className="space-y-4">
@@ -938,9 +958,10 @@ export function GameMemoryArchive() {
             <div className="flex gap-2 pt-2">
               <Button
                 onClick={handleAddMemory}
-                className="bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 font-mono transition-all duration-200 hover:scale-105"
+                disabled={isLoading}
+                className="bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 font-mono transition-all duration-200 hover:scale-105 disabled:opacity-50"
               >
-                SAVE_FILE
+                {isLoading ? "SAVING..." : "SAVE_FILE"}
               </Button>
               <Button
                 variant="ghost"
