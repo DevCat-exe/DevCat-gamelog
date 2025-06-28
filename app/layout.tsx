@@ -6,8 +6,8 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Gamelog.exe - Digital Memory Vault",
-  description: "A haunted operating system overlay for your personal game archive",
+  title: "Gamelog.exe - Digital Game Vault",
+  description: "A collection of all the games i played",
   icons: {
     icon: "/favicon.png",
   },

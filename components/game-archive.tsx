@@ -189,7 +189,7 @@ export function GameArchive() {
                 </div>
                 <div>
                   <h1 className="text-lg font-semibold text-white">Game Archive</h1>
-                  <p className="text-xs text-slate-400">Digital Memory Vault</p>
+                  <p className="text-xs text-slate-400">Digital Game Vault</p>
                 </div>
               </div>
             </SidebarHeader>
@@ -432,7 +432,7 @@ export function GameArchive() {
                   </div>
                   <h3 className="text-xl font-semibold text-white mb-2">No games found</h3>
                   <p className="text-slate-400 mb-6">
-                    {searchQuery ? "Try adjusting your search terms" : "Start building your digital memory vault"}
+                    {searchQuery ? "Try adjusting your search terms" : "Start building your digital game vault"}
                   </p>
                   <Button onClick={() => setIsAddGameOpen(true)} className="bg-red-600 hover:bg-red-700 text-white">
                     <Plus className="w-4 h-4 mr-2" />

@@ -60,7 +60,6 @@
   }
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -78,7 +77,6 @@
   background: rgba(34, 197, 94, 0.5);
 }
 
-/* Smooth animations */
 .animate-in {
   animation-duration: 0.6s;
   animation-fill-mode: both;
@@ -93,119 +91,10 @@
   animation-name: slideInFromBottom;
 }
 
-/* Glitch animations */
-@keyframes glitch {
-  0% {
-    transform: translate(0);
-  }
-  20% {
-    transform: translate(-2px, 2px);
-  }
-  40% {
-    transform: translate(-2px, -2px);
-  }
-  60% {
-    transform: translate(2px, 2px);
-  }
-  80% {
-    transform: translate(2px, -2px);
-  }
-  100% {
-    transform: translate(0);
-  }
-}
-
-.glitch {
-  animation: glitch 0.3s infinite;
-}
-
-/* CRT flicker */
-@keyframes flicker {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
-
-.flicker {
-  animation: flicker 0.15s infinite;
-}
-
-/* Terminal cursor */
-@keyframes blink {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  51%,
-  100% {
-    opacity: 0;
-  }
-}
-
-.cursor {
-  animation: blink 1s infinite;
-}
-
-/* Scanline effect */
-.scanlines {
-  position: relative;
-}
-
-.scanlines::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(34, 197, 94, 0.1) 2px,
-    rgba(34, 197, 94, 0.1) 4px
-  );
-  pointer-events: none;
-  z-index: 1000;
-}
-
-/* Window corruption effects */
-.corrupted {
-  position: relative;
-  overflow: hidden;
-}
-
-.corrupted::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 0, 0, 0.1) 50%, transparent 100%);
-  animation: corruption 2s infinite;
-  pointer-events: none;
-}
-
-@keyframes corruption {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* No rounded corners anywhere */
 * {
   border-radius: 0 !important;
 }
 
-/* Terminal input styling */
 input[type="text"],
 textarea,
 select {
@@ -243,30 +132,6 @@ select:focus {
   }
 }
 
-/* Text clamp utilities */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-4 {
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Subtle focus states */
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
-}
-
-/* Smooth transitions for all interactive elements */
 button,
 input,
 textarea,
@@ -274,7 +139,6 @@ select {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Backdrop blur support */
 .backdrop-blur-xl {
   backdrop-filter: blur(24px);
 }
@@ -283,37 +147,11 @@ select {
   backdrop-filter: blur(4px);
 }
 
-/* Selection styling */
 ::selection {
   background-color: rgba(34, 197, 94, 0.3);
   color: rgb(34, 197, 94);
 }
 
-/* Custom hover scale utilities */
-.hover\:scale-102:hover {
-  transform: scale(1.02);
-}
-
-.hover\:scale-101:hover {
-  transform: scale(1.01);
-}
-
-/* CRT flicker effect */
-@keyframes crt-flicker {
-  0%,
-  100% {
-    opacity: 0.05;
-  }
-  50% {
-    opacity: 0.1;
-  }
-}
-
-.crt-flicker {
-  animation: crt-flicker 0.15s infinite;
-}
-
-/* Game appear animation for newly added games */
 @keyframes gameAppear {
   0% {
     opacity: 0;

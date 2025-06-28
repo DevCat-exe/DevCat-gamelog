@@ -40,7 +40,6 @@ interface RAWGGame {
   platforms: string[]
 }
 
-// Load games from localStorage
 const loadGamesFromStorage = (): GameMemory[] => {
   if (typeof window === "undefined") return []
   try {
@@ -52,7 +51,6 @@ const loadGamesFromStorage = (): GameMemory[] => {
   }
 }
 
-// Save games to localStorage
 const saveGamesToStorage = (games: GameMemory[]) => {
   if (typeof window === "undefined") return
   try {
@@ -86,36 +84,30 @@ export function GameMemoryArchive() {
   const [selectedGameData, setSelectedGameData] = useState<RAWGGame | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Load games from localStorage on mount
   useEffect(() => {
     const savedGames = loadGamesFromStorage()
     setMemories(savedGames)
   }, [])
 
-  // Save games to localStorage whenever memories change
   useEffect(() => {
-    if (memories.length > 0) {
+    if (memories.length >= 0) {
       saveGamesToStorage(memories)
     }
   }, [memories])
 
-  // Debounce search query to prevent glitches when typing fast
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery)
-    }, 300) // 300ms debounce
-
+    }, 300)
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Calculate dynamic height based on game positions
   const canvasHeight = useMemo(() => {
     if (memories.length === 0) return 800
     const maxY = Math.max(...memories.map((m) => m.y + m.height))
     return Math.max(800, maxY + 100)
   }, [memories])
 
-  // Filter memories with better search grid positioning and status filtering
   const filteredMemories = useMemo(() => {
     const searchLower = debouncedSearchQuery.toLowerCase().trim()
 
@@ -129,12 +121,10 @@ export function GameMemoryArchive() {
     memories.forEach((memory) => {
       let matches = false
 
-      // Check for status-specific searches
       if (searchLower.startsWith("status:")) {
         const statusQuery = searchLower.replace("status:", "")
         matches = memory.status === statusQuery
       } else {
-        // Regular text search
         matches =
           memory.title.toLowerCase().includes(searchLower) ||
           (memory.personalNote && memory.personalNote.toLowerCase().includes(searchLower)) ||
@@ -149,19 +139,18 @@ export function GameMemoryArchive() {
       }
     })
 
-    // Better search result positioning - less clustered
     const screenWidth = typeof window !== "undefined" ? window.innerWidth : 1400
     const canvasWidth = screenWidth - 40
     const padding = 20
-    const gameSpacing = 340 // More space between games in search
-    const rowHeight = 260 // More vertical space
+    const gameSpacing = 340
+    const rowHeight = 260
 
     const repositionedMatching = matching.map((memory, index) => {
       const cols = Math.floor(canvasWidth / gameSpacing)
       const col = index % cols
       const row = Math.floor(index / cols)
 
-      const x = col * gameSpacing + padding + (Math.random() - 0.5) * 20 // Small random offset
+      const x = col * gameSpacing + padding + (Math.random() - 0.5) * 20
       const y = row * rowHeight + padding + 80 + (Math.random() - 0.5) * 20
 
       return {
@@ -174,21 +163,18 @@ export function GameMemoryArchive() {
     return [...repositionedMatching, ...nonMatching]
   }, [memories, debouncedSearchQuery])
 
-  // Auto-scroll to top when searching
   useEffect(() => {
     if (debouncedSearchQuery && containerRef.current) {
       containerRef.current.scrollTo({ top: 0, behavior: "smooth" })
     }
   }, [debouncedSearchQuery])
 
-  // Remove real-time search - only search when not in command mode
   useEffect(() => {
     if (!commandMode && commandInput) {
       setSearchQuery(commandInput)
     }
   }, [commandInput, commandMode])
 
-  // Search for games using RAWG API
   const searchGames = async (query: string) => {
     if (!query.trim()) {
       setGameSearchResults([])
@@ -213,7 +199,6 @@ export function GameMemoryArchive() {
     }
   }
 
-  // Debounced game search
   useEffect(() => {
     const timer = setTimeout(() => {
       if (gameSearchQuery) {
@@ -237,22 +222,19 @@ export function GameMemoryArchive() {
     setGameSearchQuery("")
   }
 
-  // Improved random positioning with better collision detection
   const findRandomPosition = (gameWidth: number, gameHeight: number, existingGames: GameMemory[]) => {
     const screenWidth = typeof window !== "undefined" ? window.innerWidth : 1400
     const canvasWidth = screenWidth - 40
     const padding = 20
-    const minGap = 40 // Minimum gap between games
+    const minGap = 40
 
     const maxAttempts = 200
     let attempts = 0
 
     while (attempts < maxAttempts) {
-      // Generate random position
       const x = padding + Math.random() * (canvasWidth - gameWidth - padding * 2)
-      const y = padding + 80 + Math.random() * 800 // Random Y with some vertical spread
+      const y = padding + 80 + Math.random() * 800
 
-      // Check for overlaps with existing games
       let hasOverlap = false
       for (const existing of existingGames) {
         const dx = Math.abs(x - existing.x)
@@ -273,7 +255,6 @@ export function GameMemoryArchive() {
       attempts++
     }
 
-    // Fallback: place it in a safe area at the bottom
     const fallbackY = Math.max(400, ...existingGames.map((g) => g.y + g.height + 50))
     return {
       x: padding + Math.random() * (canvasWidth - gameWidth - padding * 2),
@@ -286,7 +267,7 @@ export function GameMemoryArchive() {
       const bootSequence = [
         "Devcat/Gamelog.exe",
         "",
-        "MEMORY_ARCHIVE_OS v2.3.0",
+        "DIGITAL_GAME_VAULT v3.0.0",
         "Initializing neural pathways...",
         "Loading game memories...",
         "Mounting nostalgia drive...",
@@ -295,7 +276,7 @@ export function GameMemoryArchive() {
         "Scanning memory fragments...",
         memories.length > 0 ? `Found ${memories.length} game files` : "Archive initialized - ready for new memories",
         "Optimizing random layout...",
-        "Boot complete. Welcome to your archive.",
+        "Boot complete. Welcome to your vault.",
         "",
         "CTRL+K for commands | //add to start",
       ]
@@ -373,14 +354,11 @@ export function GameMemoryArchive() {
       const gameWidth = 280
       const gameHeight = 200
 
-      // Use selected game data if available
       const gameData = selectedGameData
       const releaseYear = gameData?.released ? new Date(gameData.released).getFullYear() : 2024
 
-      // Find random position that doesn't overlap
       const { x, y } = findRandomPosition(gameWidth, gameHeight, memories)
 
-      // Create new memory with random position
       const memory: GameMemory = {
         id: Date.now().toString(),
         title: newMemory.title,
@@ -398,19 +376,17 @@ export function GameMemoryArchive() {
         width: gameWidth,
         height: gameHeight,
         zIndex: memories.length + 1,
-        windowType: ["terminal", "file", "glitch", "memory"][Math.floor(Math.random() * 4)] as any, // Random window type
+        windowType: ["terminal", "file", "glitch", "memory"][Math.floor(Math.random() * 4)] as any,
         memoryClarity: "vivid",
         isVisible: true,
       }
 
-      // Add to beginning of array (newest first) and trigger animation
       const newMemories = [memory, ...memories]
       setMemories(newMemories)
       setNewMemory({ title: "", status: "unfinished", personalNote: "" })
       setSelectedGameData(null)
       setIsAddingMemory(false)
 
-      // Scroll to the new game after a brief delay
       setTimeout(() => {
         if (containerRef.current) {
           containerRef.current.scrollTo({
@@ -459,7 +435,6 @@ export function GameMemoryArchive() {
 
   const getWindowStyle = (memory: GameMemory) => {
     let opacity = memory.isVisible ? 0.95 : 0
-    const filter = "none"
 
     switch (memory.memoryClarity) {
       case "vivid":
@@ -473,7 +448,6 @@ export function GameMemoryArchive() {
         break
     }
 
-    // Check if this is a newly added game (within last 2 seconds)
     const isNewlyAdded = new Date().getTime() - new Date(memory.addedOn).getTime() < 2000
 
     return {
@@ -484,7 +458,6 @@ export function GameMemoryArchive() {
       height: `${memory.height}px`,
       zIndex: memory.zIndex,
       opacity,
-      filter,
       transition: "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
       transform: memory.isVisible ? "translateZ(0) scale(1)" : "translateZ(0) scale(0.95)",
       pointerEvents: memory.isVisible ? "auto" : "none",
@@ -492,7 +465,6 @@ export function GameMemoryArchive() {
       WebkitUserSelect: "none",
       MozUserSelect: "none",
       msUserSelect: "none",
-      // Add special animation for newly added games
       animation: isNewlyAdded ? "gameAppear 0.8s cubic-bezier(0.4, 0, 0.2, 1)" : undefined,
     }
   }
@@ -500,7 +472,6 @@ export function GameMemoryArchive() {
   const getWindowClass = (memory: GameMemory) => {
     const baseClass = "border-2 backdrop-blur-sm cursor-pointer font-mono text-xs select-none"
 
-    // Add status-based accent colors
     let statusAccent = ""
     switch (memory.status) {
       case "finished":
@@ -572,7 +543,6 @@ export function GameMemoryArchive() {
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono relative select-none">
-      {/* Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 opacity-5">
           {Array.from({ length: 30 }).map((_, i) => (
@@ -645,10 +615,9 @@ export function GameMemoryArchive() {
         </div>
       </div>
 
-      {/* Scrollable content area */}
       <div ref={containerRef} className="pt-12 overflow-y-auto" style={{ height: "calc(100vh - 48px)" }}>
         <div className="relative w-full" style={{ height: `${canvasHeight}px` }}>
-          {filteredMemories.map((memory, index) => (
+          {filteredMemories.map((memory) => (
             <div
               key={memory.id}
               style={getWindowStyle(memory)}
@@ -701,7 +670,6 @@ export function GameMemoryArchive() {
         </div>
       )}
 
-      {/* Popup Dialog */}
       {popupMemory && !isEditingMemory && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-in fade-in duration-300">
           <div
@@ -770,7 +738,6 @@ export function GameMemoryArchive() {
         </div>
       )}
 
-      {/* Edit Memory Dialog */}
       {isEditingMemory && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-in fade-in duration-300">
           <div className="bg-black/95 border-2 border-green-500/50 text-green-400 font-mono w-[600px] max-w-[90vw] max-h-[90vh] overflow-auto animate-in zoom-in-95 duration-300">
@@ -863,13 +830,11 @@ export function GameMemoryArchive() {
         </div>
       )}
 
-      {/* Add Memory Dialog */}
       <Dialog open={isAddingMemory} onOpenChange={setIsAddingMemory}>
         <DialogContent className="bg-black/95 border-2 border-green-500/50 text-green-400 font-mono animate-in zoom-in-95 duration-300 max-w-2xl">
           <div className="space-y-4">
             <div className="text-sm border-b border-green-500/30 pb-2">CREATE_NEW_MEMORY_FILE</div>
 
-            {/* Game Search */}
             <div>
               <label className="text-xs opacity-80">SEARCH_RAWG_DATABASE:</label>
               <div className="relative">
@@ -886,7 +851,6 @@ export function GameMemoryArchive() {
                 )}
               </div>
 
-              {/* Search Results */}
               {gameSearchResults.length > 0 && (
                 <div className="mt-2 border border-green-500/30 bg-black/80 max-h-48 overflow-y-auto">
                   {gameSearchResults.map((game) => (

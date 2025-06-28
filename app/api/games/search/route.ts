@@ -26,7 +26,6 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json()
 
-    // Transform the data to match our interface
     const games =
       data.results?.map((game: any) => ({
         id: game.id,
