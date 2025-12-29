@@ -1,30 +1,48 @@
-# Minimalist game archive
+# 🎮 Gamelog.exe - Digital Game Vault
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+A high-performance, terminal-inspired digital vault for archiving game memories. Built with **Next.js 16**, **React 19**, and **Supabase**.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/mahir9011s-projects/v0-minimalist-game-archive)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/HzqWip27W6s)
+> "Neural fragments preserved. Nostalgia drive mounted."
 
-## Overview
+---
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## ✨ Features
 
-## Deployment
+### 🖥️ Immersive Interface
 
-Your project is live at:
+- **Boot Sequence**: A nostalgic OS startup animation with dynamic data loading.
+- **Dynamic Background**: Livelier starfield with floating Matrix-like characters and scanning line effects.
+- **Windowed UI**: Game fragments rendered as "terminal," "file," "glitch," or "memory" windows.
 
-**[https://vercel.com/mahir9011s-projects/v0-minimalist-game-archive](https://vercel.com/mahir9011s-projects/v0-minimalist-game-archive)**
+### 🔍 Command Line Interface (CLI)
 
-## Build your app
+Press `CTRL + K` to activate the vault overlay and execute commands:
 
-Continue building your app on:
+- `//add` - Initialize a new game memory fragment.
+- `//stats` - Open the Archive Statistics module.
+- `//search [query]` - Filter fragments by title, genre, or developer.
+- `//status [finished|wishlist]` - Quick-filter by play status.
 
-**[https://v0.dev/chat/projects/HzqWip27W6s](https://v0.dev/chat/projects/HzqWip27W6s)**
+### 📊 Stats Module
 
-## How It Works
+Visualize your collection data with the built-in stats interface, featuring completion progress bars and genre distribution.
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+### 🌐 Cloud Sync & RAWG API
+
+- **Live Search**: Integrated with the RAWG API to pull real-time game metadata, cover art, and scores.
+- **Supabase Persistence**: Automatic cloud sync with a local storage fallback.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Library**: React 19
+- **Styling**: Tailwind CSS
+- **Database**: Supabase
+- **Icons**: Lucide React
+- **UI Components**: Radix UI (Optimized/Pruned)
+
+## 📄 License
+
+Preserved for personal use. Fragile.
