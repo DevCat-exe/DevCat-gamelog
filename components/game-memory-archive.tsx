@@ -7,6 +7,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { gameService, type GameMemory } from "@/lib/game-service"
 
+// New Components
+import { BootScreen } from "./boot-screen"
+import { BackgroundEffects } from "./background-effects"
+import { GameWindow } from "./game-window"
+import { GameDetailsPopup } from "./game-details-popup"
+import { CommandBar } from "./command-bar"
+import { StatsWindow } from "./stats-window"
+
 interface RAWGGame {
   id: number
   name: string
@@ -22,7 +30,6 @@ interface RAWGGame {
 export function GameMemoryArchive() {
   const [memories, setMemories] = useState<GameMemory[]>([])
   const [isBooting, setIsBooting] = useState(true)
-  const [bootText, setBootText] = useState("")
   const [commandMode, setCommandMode] = useState(false)
   const [commandInput, setCommandInput] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
@@ -42,6 +49,8 @@ export function GameMemoryArchive() {
   const [isSearchingGames, setIsSearchingGames] = useState(false)
   const [selectedGameData, setSelectedGameData] = useState<RAWGGame | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [showStats, setShowStats] = useState(false)
+  
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Load games from Supabase on mount
@@ -52,29 +61,19 @@ export function GameMemoryArchive() {
   const loadGamesFromDatabase = async () => {
     try {
       setIsLoading(true)
-
-      // Check if database is available first
       const isDatabaseAvailable = await gameService.isDatabaseAvailable()
-
       if (!isDatabaseAvailable) {
-        console.warn("Database not available. Please run the SQL script in Supabase to create the tables.")
-        // Load from localStorage as fallback
+        console.warn("Database not available. Using localStorage.")
         const saved = localStorage.getItem("gamelog-memories")
-        if (saved) {
-          setMemories(JSON.parse(saved))
-        }
+        if (saved) setMemories(JSON.parse(saved))
         return
       }
-
       const games = await gameService.getAllGames()
       setMemories(games)
     } catch (error) {
       console.error("Failed to load games:", error)
-      // Fallback to localStorage if Supabase fails
       const saved = localStorage.getItem("gamelog-memories")
-      if (saved) {
-        setMemories(JSON.parse(saved))
-      }
+      if (saved) setMemories(JSON.parse(saved))
     } finally {
       setIsLoading(false)
     }
@@ -112,9 +111,9 @@ export function GameMemoryArchive() {
       } else {
         matches =
           memory.title.toLowerCase().includes(searchLower) ||
-          (memory.personalNote && memory.personalNote.toLowerCase().includes(searchLower)) ||
-          (memory.genre && memory.genre.toLowerCase().includes(searchLower)) ||
-          (memory.developer && memory.developer.toLowerCase().includes(searchLower))
+          (memory.personalNote?.toLowerCase().includes(searchLower) ?? false) ||
+          (memory.genre?.toLowerCase().includes(searchLower) ?? false) ||
+          (memory.developer?.toLowerCase().includes(searchLower) ?? false)
       }
 
       if (matches) {
@@ -248,41 +247,6 @@ export function GameMemoryArchive() {
   }
 
   useEffect(() => {
-    if (isBooting) {
-      const bootSequence = [
-        "Devcat/Gamelog.exe",
-        "",
-        "DIGITAL_GAME_VAULT v3.0.0",
-        "Initializing neural pathways...",
-        "Loading game memories...",
-        "Mounting nostalgia drive...",
-        "Connecting to Supabase database...",
-        "Database connection established ✓",
-        "Scanning memory fragments...",
-        memories.length > 0 ? `Found ${memories.length} game files` : "Archive initialized - ready for new memories",
-        "Cloud sync enabled ✓",
-        "Optimizing random layout...",
-        "Boot complete. Welcome to your vault.",
-        "",
-        "CTRL+K for commands | //add to start",
-      ]
-
-      let currentLine = 0
-      const bootInterval = setInterval(() => {
-        if (currentLine < bootSequence.length) {
-          setBootText((prev) => prev + bootSequence[currentLine] + "\n")
-          currentLine++
-        } else {
-          clearInterval(bootInterval)
-          setTimeout(() => setIsBooting(false), 1000)
-        }
-      }, 300)
-
-      return () => clearInterval(bootInterval)
-    }
-  }, [isBooting, memories.length])
-
-  useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
@@ -297,6 +261,8 @@ export function GameMemoryArchive() {
         setCommandInput("")
         setGameSearchResults([])
         setSelectedGameData(null)
+        setShowStats(false)
+        setIsAddingMemory(false)
       }
       if (e.ctrlKey && e.key === "k") {
         e.preventDefault()
@@ -313,6 +279,10 @@ export function GameMemoryArchive() {
 
     if (cmd === "//add") {
       setIsAddingMemory(true)
+      setCommandMode(false)
+      setCommandInput("")
+    } else if (cmd === "//stats") {
+      setShowStats(true)
       setCommandMode(false)
       setCommandInput("")
     } else if (cmd.startsWith("//search ")) {
@@ -339,10 +309,8 @@ export function GameMemoryArchive() {
     if (newMemory.title.trim()) {
       const gameWidth = 280
       const gameHeight = 200
-
       const gameData = selectedGameData
       const releaseYear = gameData?.released ? new Date(gameData.released).getFullYear() : 2024
-
       const { x, y } = findRandomPosition(gameWidth, gameHeight, memories)
 
       const memory: Omit<GameMemory, "id"> = {
@@ -353,7 +321,7 @@ export function GameMemoryArchive() {
         year: releaseYear,
         genre: gameData?.genres?.[0] || "unknown",
         developer: gameData?.developers?.[0] || "Unknown",
-        coverUrl: gameData?.background_image || "/placeholder.svg?height=300&width=200",
+        coverUrl: gameData?.background_image || "/placeholder.svg?height=300&width=200", // Fallback to RAWG/Placeholder
         metacritic: gameData?.metacritic,
         platforms: gameData?.platforms,
         x,
@@ -373,7 +341,6 @@ export function GameMemoryArchive() {
         setNewMemory({ title: "", status: "unfinished", personalNote: "" })
         setSelectedGameData(null)
         setIsAddingMemory(false)
-
         setTimeout(() => {
           if (containerRef.current) {
             containerRef.current.scrollTo({
@@ -384,17 +351,13 @@ export function GameMemoryArchive() {
         }, 100)
       } catch (error) {
         console.error("Failed to add game:", error)
-        // Fallback to localStorage
-        const memoryWithId = { ...memory, id: Date.now().toString() }
-        setMemories((prev) => [memoryWithId, ...prev])
-        localStorage.setItem("gamelog-memories", JSON.stringify([memoryWithId, ...memories]))
       } finally {
         setIsLoading(false)
       }
     }
   }
 
-  const handleEditMemory = async () => {
+  const handleSaveEdit = async () => {
     if (editingMemory.id) {
       try {
         setIsLoading(true)
@@ -402,33 +365,28 @@ export function GameMemoryArchive() {
         setMemories((prev) => prev.map((memory) => (memory.id === editingMemory.id ? updatedMemory : memory)))
         setIsEditingMemory(false)
         setEditingMemory({})
-        setPopupMemory(null)
+        setPopupMemory(prev => prev && prev.id === updatedMemory.id ? updatedMemory : prev)
       } catch (error) {
         console.error("Failed to update game:", error)
-        // Fallback to local update
-        const updatedMemories = memories.map((memory) =>
-          memory.id === editingMemory.id
-            ? {
-                ...memory,
-                status: editingMemory.status || memory.status,
-                personalNote: editingMemory.personalNote || memory.personalNote,
-                title: editingMemory.title || memory.title,
-                genre: editingMemory.genre || memory.genre,
-                developer: editingMemory.developer || memory.developer,
-                year: editingMemory.year || memory.year,
-              }
-            : memory,
-        )
-        setMemories(updatedMemories)
-        localStorage.setItem("gamelog-memories", JSON.stringify(updatedMemories))
-        setIsEditingMemory(false)
-        setEditingMemory({})
-        setPopupMemory(null)
       } finally {
         setIsLoading(false)
       }
     }
   }
+
+    const handleDeleteGame = async (id: string) => {
+        try {
+            setIsLoading(true)
+            await gameService.deleteGame(id)
+            setMemories(prev => prev.filter(m => m.id !== id))
+            setPopupMemory(null)
+            setIsEditingMemory(false)
+        } catch (error) {
+            console.error("Failed to delete game:", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
   const startEditingMemory = (memory: GameMemory) => {
     setEditingMemory({
@@ -443,159 +401,13 @@ export function GameMemoryArchive() {
     setIsEditingMemory(true)
   }
 
-  const getWindowStyle = (memory: GameMemory) => {
-    let opacity = memory.isVisible ? 0.95 : 0
-
-    switch (memory.memoryClarity) {
-      case "vivid":
-        opacity = memory.isVisible ? 0.95 : 0
-        break
-      case "faded":
-        opacity = memory.isVisible ? 0.85 : 0
-        break
-      case "forgotten":
-        opacity = memory.isVisible ? 0.75 : 0
-        break
-    }
-
-    const isNewlyAdded = new Date().getTime() - new Date(memory.addedOn).getTime() < 2000
-
-    return {
-      position: "absolute" as const,
-      left: `${memory.x}px`,
-      top: `${memory.y}px`,
-      width: `${memory.width}px`,
-      height: `${memory.height}px`,
-      zIndex: memory.zIndex,
-      opacity,
-      transition: "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
-      transform: memory.isVisible ? "translateZ(0) scale(1)" : "translateZ(0) scale(0.95)",
-      pointerEvents: memory.isVisible ? "auto" : "none",
-      userSelect: "none",
-      WebkitUserSelect: "none",
-      MozUserSelect: "none",
-      msUserSelect: "none",
-      animation: isNewlyAdded ? "gameAppear 0.8s cubic-bezier(0.4, 0, 0.2, 1)" : undefined,
-    }
-  }
-
-  const getWindowClass = (memory: GameMemory) => {
-    const baseClass = "border-2 backdrop-blur-sm cursor-pointer font-mono text-xs select-none"
-
-    let statusAccent = ""
-    switch (memory.status) {
-      case "finished":
-        statusAccent = "border-l-4 border-l-green-500/70"
-        break
-      case "unfinished":
-        statusAccent = "border-l-4 border-l-yellow-500/70"
-        break
-      case "wishlist":
-        statusAccent = "border-l-4 border-l-blue-500/70"
-        break
-    }
-
-    switch (memory.windowType) {
-      case "terminal":
-        return `${baseClass} ${statusAccent} bg-black/80 border-green-500/50 text-green-400 hover:border-green-400/70 hover:bg-black/90`
-      case "file":
-        return `${baseClass} ${statusAccent} bg-slate-900/80 border-blue-500/50 text-blue-300 hover:border-blue-400/70 hover:bg-slate-900/90`
-      case "glitch":
-        return `${baseClass} ${statusAccent} bg-red-950/80 border-red-500/50 text-red-300 hover:border-red-400/70 hover:bg-red-950/90`
-      case "memory":
-        return `${baseClass} ${statusAccent} bg-purple-950/80 border-purple-500/50 text-purple-300 hover:border-purple-400/70 hover:bg-purple-950/90`
-      default:
-        return `${baseClass} ${statusAccent} bg-gray-900/80 border-gray-500/50 text-gray-300 hover:border-gray-400/70 hover:bg-gray-900/90`
-    }
-  }
-
-  const getStatusSymbol = (status: string) => {
-    switch (status) {
-      case "finished":
-        return "[✓]"
-      case "unfinished":
-        return "[~]"
-      case "wishlist":
-        return "[★]"
-      default:
-        return "[?]"
-    }
-  }
-
-  const formatTimestamp = (dateString: string) => {
-    const date = new Date(dateString)
-    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`
-  }
-
-  const getMemoryClarityText = (clarity: string) => {
-    switch (clarity) {
-      case "vivid":
-        return "CLEAR"
-      case "faded":
-        return "FADED"
-      case "forgotten":
-        return "FRAGMENTED"
-      default:
-        return "UNKNOWN"
-    }
-  }
-
   if (isBooting) {
-    return (
-      <div className="min-h-screen bg-black text-green-400 font-mono p-8 overflow-hidden">
-        <div className="whitespace-pre-wrap text-sm leading-relaxed">
-          {bootText}
-          <span className="animate-pulse">█</span>
-        </div>
-      </div>
-    )
+    return <BootScreen onBootComplete={() => setIsBooting(false)} gameCount={memories.length} />
   }
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono relative select-none">
-      {/* Background effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-5">
-          {Array.from({ length: 30 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute text-green-500 text-xs font-mono animate-pulse"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${3 + Math.random() * 4}s`,
-              }}
-            >
-              {String.fromCharCode(33 + Math.floor(Math.random() * 94))}
-            </div>
-          ))}
-        </div>
-
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(34, 197, 94, 0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(34, 197, 94, 0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: "50px 50px",
-          }}
-        />
-
-        {Array.from({ length: 15 }).map((_, i) => (
-          <div
-            key={`particle-${i}`}
-            className="absolute w-1 h-1 bg-green-500/20 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`,
-            }}
-          />
-        ))}
-      </div>
+      <BackgroundEffects />
 
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 bg-black/90 border-b border-green-500/30 p-2 text-xs z-40 backdrop-blur-sm">
@@ -613,12 +425,8 @@ export function GameMemoryArchive() {
               </span>
             )}
             <span className="text-green-600">|</span>
-            <span className="text-blue-400">
-              ✓{memories.filter((m) => m.status === "finished").length}~
-              {memories.filter((m) => m.status === "unfinished").length}★
-              {memories.filter((m) => m.status === "wishlist").length}
-            </span>
-            {isLoading && <span className="text-yellow-400">| SYNCING...</span>}
+            <span className="text-blue-400 cursor-pointer hover:text-blue-300" onClick={() => setShowStats(true)}>STATS_MODULE</span>
+            {isLoading && <span className="text-yellow-400 animate-pulse">| SYNCING...</span>}
           </div>
           <div className="flex gap-4">
             <span>{currentTime.toLocaleTimeString()}</span>
@@ -632,348 +440,133 @@ export function GameMemoryArchive() {
       <div ref={containerRef} className="pt-12 overflow-y-auto" style={{ height: "calc(100vh - 48px)" }}>
         <div className="relative w-full" style={{ height: `${canvasHeight}px` }}>
           {filteredMemories.map((memory) => (
-            <div
-              key={memory.id}
-              style={getWindowStyle(memory)}
-              className={getWindowClass(memory)}
-              onDoubleClick={() => memory.isVisible && setPopupMemory(memory)}
-            >
-              <div className="border-b border-current/30 p-1 text-xs flex justify-between items-center">
-                <span className="truncate">{memory.title}</span>
-                <span className="text-xs opacity-60">{getStatusSymbol(memory.status)}</span>
-              </div>
-
-              <div className="p-2 h-full overflow-hidden">
-                <div className="space-y-1">
-                  <div className="text-xs font-bold truncate">{memory.title}</div>
-                  <div className="text-xs opacity-70">{memory.genre || "unknown"}</div>
-                  <div className="text-xs opacity-50">{formatTimestamp(memory.addedOn)}</div>
-                  {memory.personalNote && (
-                    <div className="text-xs opacity-60 italic truncate mt-2">
-                      "{memory.personalNote.substring(0, 30)}..."
-                    </div>
-                  )}
-                  {memory.metacritic && <div className="text-xs opacity-50">Score: {memory.metacritic}</div>}
-                </div>
-              </div>
-            </div>
+             <GameWindow 
+                key={memory.id} 
+                memory={memory} 
+                onDoubleClick={setPopupMemory} 
+             />
           ))}
         </div>
       </div>
 
-      {/* Command Mode */}
-      {commandMode && (
-        <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-green-500/50 p-4 z-50 animate-in slide-in-from-bottom duration-200">
-          <div className="flex items-center gap-2">
-            <span className="text-green-500">$</span>
-            <Input
-              value={commandInput}
-              onChange={(e) => setCommandInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && commandInput.startsWith("//")) {
-                  handleCommand(commandInput)
-                }
-              }}
-              className="bg-transparent border-none text-green-400 font-mono focus:ring-0 focus:outline-none"
-              placeholder="//command..."
-              autoFocus
-            />
-          </div>
-          <div className="text-xs opacity-60 mt-2">
-            Commands: //add //search [term] //status [finished|unfinished|wishlist]
-          </div>
-        </div>
+      <CommandBar 
+          isVisible={commandMode} 
+          commandInput={commandInput} 
+          setCommandInput={setCommandInput} 
+          onExecute={handleCommand} 
+      />
+
+      {/* Popups */}
+      {showStats && <StatsWindow memories={memories} onClose={() => setShowStats(false)} />}
+
+      {popupMemory && (
+          <GameDetailsPopup 
+            memory={popupMemory}
+            onClose={() => { setPopupMemory(null); setIsEditingMemory(false); }}
+            onEdit={startEditingMemory}
+            onDelete={handleDeleteGame}
+            isEditing={isEditingMemory}
+            isLoading={isLoading}
+            editingMemory={editingMemory}
+            setEditingMemory={setEditingMemory}
+            onSaveEdit={handleSaveEdit}
+            onCancelEdit={() => { setIsEditingMemory(false);  }}
+          />
       )}
 
-      {/* Game Details Popup */}
-      {popupMemory && !isEditingMemory && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-in fade-in duration-300">
-          <div
-            className={`${getWindowClass(popupMemory)} w-[600px] max-w-[90vw] max-h-[90vh] overflow-auto animate-in zoom-in-95 duration-300 select-text`}
-            style={{ animationDelay: "100ms" }}
-          >
-            <div className="border-b border-current/30 p-3 text-sm flex justify-between items-center">
-              <span>{popupMemory.title} - PROPERTIES</span>
-              <button
-                onClick={() => setPopupMemory(null)}
-                className="hover:bg-current/20 px-2 py-1 transition-colors duration-200"
-              >
-                [X]
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 text-sm">
-              <div className="flex gap-6">
-                <div className="flex-shrink-0">
-                  <img
-                    src={popupMemory.coverUrl || "/placeholder.svg"}
-                    alt={popupMemory.title}
-                    className="w-32 h-44 object-cover border border-current/30 transition-transform duration-300 hover:scale-105"
-                  />
-                </div>
-                <div className="flex-1 space-y-2">
-                  <div className="text-lg font-bold">{popupMemory.title}</div>
-                  <div>STATUS: {popupMemory.status.toUpperCase()}</div>
-                  <div>CREATED: {formatTimestamp(popupMemory.addedOn)}</div>
-                  <div>CLARITY: {getMemoryClarityText(popupMemory.memoryClarity)}</div>
-                  {popupMemory.year && <div>YEAR: {popupMemory.year}</div>}
-                  {popupMemory.genre && <div>GENRE: {popupMemory.genre.toUpperCase().replace(/_/g, " ")}</div>}
-                  {popupMemory.developer && <div>DEVELOPER: {popupMemory.developer}</div>}
-                  {popupMemory.metacritic && <div>METACRITIC: {popupMemory.metacritic}/100</div>}
-                  {popupMemory.platforms && popupMemory.platforms.length > 0 && (
-                    <div>PLATFORMS: {popupMemory.platforms.slice(0, 3).join(", ")}</div>
-                  )}
-                </div>
-              </div>
-
-              {popupMemory.personalNote && (
-                <div className="border-t border-current/30 pt-4">
-                  <div className="opacity-80 mb-2">MEMORY_FRAGMENT:</div>
-                  <div className="italic opacity-90 leading-relaxed bg-current/10 p-3 border border-current/20">
-                    "{popupMemory.personalNote}"
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-between pt-4 border-t border-current/30">
-                <button
-                  onClick={() => startEditingMemory(popupMemory)}
-                  className="px-4 py-2 border border-green-500/50 text-green-400 hover:bg-green-500/20 transition-all duration-200 hover:scale-105"
-                  disabled={isLoading}
-                >
-                  EDIT
-                </button>
-                <button
-                  onClick={() => setPopupMemory(null)}
-                  className="px-4 py-2 border border-current/50 hover:bg-current/20 transition-all duration-200 hover:scale-105"
-                >
-                  CLOSE
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Memory Dialog */}
-      {isEditingMemory && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-in fade-in duration-300">
-          <div className="bg-black/95 border-2 border-green-500/50 text-green-400 font-mono w-[600px] max-w-[90vw] max-h-[90vh] overflow-auto animate-in zoom-in-95 duration-300">
-            <div className="border-b border-green-500/30 p-3 text-sm flex justify-between items-center">
-              <span>EDIT_MEMORY_FILE</span>
-              <button
-                onClick={() => setIsEditingMemory(false)}
-                className="hover:bg-current/20 px-2 py-1 transition-colors duration-200"
-              >
-                [X]
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="text-xs opacity-80">FILENAME:</label>
-                <Input
-                  value={editingMemory.title || ""}
-                  onChange={(e) => setEditingMemory({ ...editingMemory, title: e.target.value })}
-                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
-                />
-              </div>
-              <div>
-                <label className="text-xs opacity-80">STATUS:</label>
-                <select
-                  value={editingMemory.status || "unfinished"}
-                  onChange={(e) => setEditingMemory({ ...editingMemory, status: e.target.value as any })}
-                  className="w-full bg-black border border-green-500/30 text-green-400 font-mono p-2 mt-1 transition-all duration-200 focus:border-green-400/70"
-                >
-                  <option value="unfinished">UNFINISHED</option>
-                  <option value="finished">FINISHED</option>
-                  <option value="wishlist">WISHLIST</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs opacity-80">GENRE:</label>
-                <Input
-                  value={editingMemory.genre || ""}
-                  onChange={(e) => setEditingMemory({ ...editingMemory, genre: e.target.value })}
-                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
-                  placeholder="e.g. horror, rpg, platformer"
-                />
-              </div>
-              <div>
-                <label className="text-xs opacity-80">DEVELOPER:</label>
-                <Input
-                  value={editingMemory.developer || ""}
-                  onChange={(e) => setEditingMemory({ ...editingMemory, developer: e.target.value })}
-                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
-                  placeholder="Game developer"
-                />
-              </div>
-              <div>
-                <label className="text-xs opacity-80">YEAR:</label>
-                <Input
-                  type="number"
-                  value={editingMemory.year || ""}
-                  onChange={(e) => setEditingMemory({ ...editingMemory, year: Number.parseInt(e.target.value) })}
-                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
-                  placeholder="Release year"
-                />
-              </div>
-              <div>
-                <label className="text-xs opacity-80">MEMORY_FRAGMENT:</label>
-                <Textarea
-                  value={editingMemory.personalNote || ""}
-                  onChange={(e) => setEditingMemory({ ...editingMemory, personalNote: e.target.value })}
-                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 resize-none transition-all duration-200 focus:border-green-400/70"
-                  rows={3}
-                  placeholder="// personal memory or note..."
-                />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button
-                  onClick={handleEditMemory}
-                  disabled={isLoading}
-                  className="bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 font-mono transition-all duration-200 hover:scale-105 disabled:opacity-50"
-                >
-                  {isLoading ? "SAVING..." : "SAVE_CHANGES"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="border border-red-500/50 text-red-400 hover:bg-red-500/20 font-mono transition-all duration-200 hover:scale-105"
-                  onClick={() => setIsEditingMemory(false)}
-                >
-                  CANCEL
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Memory Dialog */}
-      <Dialog open={isAddingMemory} onOpenChange={setIsAddingMemory}>
-        <DialogContent className="bg-black/95 border-2 border-green-500/50 text-green-400 font-mono animate-in zoom-in-95 duration-300 max-w-2xl">
+      {/* Add Memory Dialog - Kept inline as it's complex and interacts with RAWG search */}
+       <Dialog open={isAddingMemory} onOpenChange={setIsAddingMemory}>
+        <DialogContent className="bg-black/95 border-2 border-green-500 text-green-400 font-mono sm:max-w-[500px]">
           <div className="space-y-4">
-            <div className="text-sm border-b border-green-500/30 pb-2">CREATE_NEW_MEMORY_FILE</div>
+            <h2 className="text-lg font-bold border-b border-green-500/30 pb-2">ADD_NEW_MEMORY_FRAGMENT</h2>
 
             <div>
-              <label className="text-xs opacity-80">SEARCH_RAWG_DATABASE:</label>
+              <label className="text-xs opacity-80">SEARCH_DATABASE:</label>
               <div className="relative">
                 <Input
                   value={gameSearchQuery}
                   onChange={(e) => setGameSearchQuery(e.target.value)}
-                  className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
-                  placeholder="search for game..."
+                  className="bg-black border border-green-500/30 text-green-400 font-mono mt-1"
+                  placeholder="Type game title..."
+                  autoFocus
                 />
                 {isSearchingGames && (
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                    <div className="animate-spin w-4 h-4 border border-green-400 border-t-transparent rounded-full"></div>
-                  </div>
+                  <div className="absolute right-2 top-3 text-xs opacity-50 animate-pulse">SCANNING...</div>
                 )}
               </div>
 
               {gameSearchResults.length > 0 && (
-                <div className="mt-2 border border-green-500/30 bg-black/80 max-h-48 overflow-y-auto">
+                <div className="mt-2 max-h-40 overflow-y-auto border border-green-500/30 bg-black/90 absolute w-full z-50">
                   {gameSearchResults.map((game) => (
                     <div
                       key={game.id}
                       onClick={() => selectGameFromSearch(game)}
-                      className="p-2 hover:bg-green-500/20 cursor-pointer border-b border-green-500/20 last:border-b-0"
+                      className="p-2 hover:bg-green-500/20 cursor-pointer text-xs flex justify-between items-center border-b border-green-500/10"
                     >
-                      <div className="flex gap-3">
-                        <img
-                          src={game.background_image || "/placeholder.svg"}
-                          alt={game.name}
-                          className="w-12 h-16 object-cover border border-green-500/30"
-                        />
-                        <div className="flex-1">
-                          <div className="text-sm font-bold">{game.name}</div>
-                          <div className="text-xs opacity-70">
-                            {game.released && new Date(game.released).getFullYear()} •{" "}
-                            {game.genres.slice(0, 2).join(", ")}
-                          </div>
-                          <div className="text-xs opacity-50">{game.developers.slice(0, 1).join(", ")}</div>
-                          {game.metacritic && <div className="text-xs opacity-60">Score: {game.metacritic}</div>}
-                        </div>
-                      </div>
+                      <span>{game.name}</span>
+                      <span className="opacity-50">{game.released?.substring(0, 4)}</span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            <div>
-              <label className="text-xs opacity-80">FILENAME:</label>
-              <Input
-                value={newMemory.title}
-                onChange={(e) => setNewMemory({ ...newMemory, title: e.target.value })}
-                className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 transition-all duration-200 focus:border-green-400/70"
-                placeholder="game_title.exe"
-              />
-            </div>
-
             {selectedGameData && (
-              <div className="border border-green-500/30 p-3 bg-green-500/10">
-                <div className="text-xs opacity-80 mb-2">SELECTED_GAME_DATA:</div>
-                <div className="flex gap-3">
-                  <img
-                    src={selectedGameData.background_image || "/placeholder.svg"}
-                    alt={selectedGameData.name}
-                    className="w-16 h-20 object-cover border border-green-500/30"
-                  />
-                  <div className="text-xs space-y-1">
-                    <div>
-                      <strong>{selectedGameData.name}</strong>
-                    </div>
-                    <div>Released: {selectedGameData.released}</div>
-                    <div>Genre: {selectedGameData.genres.slice(0, 2).join(", ")}</div>
-                    <div>Developer: {selectedGameData.developers.slice(0, 1).join(", ")}</div>
-                    {selectedGameData.metacritic && <div>Score: {selectedGameData.metacritic}/100</div>}
-                  </div>
+              <div className="p-2 border border-green-500/30 bg-green-500/5 text-xs">
+                <div>SELECTED: {selectedGameData.name}</div>
+                <div className="opacity-70">
+                   GENRE: {selectedGameData.genres?.[0] || "N/A"} | DEV: {selectedGameData.developers?.[0] || "N/A"}
                 </div>
               </div>
             )}
 
             <div>
-              <label className="text-xs opacity-80">STATUS:</label>
-              <select
-                value={newMemory.status}
-                onChange={(e) => setNewMemory({ ...newMemory, status: e.target.value as any })}
-                className="w-full bg-black border border-green-500/30 text-green-400 font-mono p-2 mt-1 transition-all duration-200 focus:border-green-400/70"
-              >
-                <option value="unfinished">UNFINISHED</option>
-                <option value="finished">FINISHED</option>
-                <option value="wishlist">WISHLIST</option>
-              </select>
+              <label className="text-xs opacity-80">MANUAL_OVERRIDE_TITLE:</label>
+              <Input
+                value={newMemory.title}
+                onChange={(e) => setNewMemory({ ...newMemory, title: e.target.value })}
+                className="bg-black border border-green-500/30 text-green-400 font-mono mt-1"
+              />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs opacity-80">STATUS:</label>
+                <select
+                  value={newMemory.status}
+                  onChange={(e) => setNewMemory({ ...newMemory, status: e.target.value as any })}
+                  className="w-full bg-black border border-green-500/30 text-green-400 font-mono p-2 mt-1"
+                >
+                  <option value="unfinished">UNFINISHED</option>
+                  <option value="finished">FINISHED</option>
+                  <option value="wishlist">WISHLIST</option>
+                </select>
+              </div>
+            </div>
+
             <div>
-              <label className="text-xs opacity-80">MEMORY_FRAGMENT:</label>
+              <label className="text-xs opacity-80">PERSONAL_NOTE:</label>
               <Textarea
                 value={newMemory.personalNote}
                 onChange={(e) => setNewMemory({ ...newMemory, personalNote: e.target.value })}
-                className="bg-transparent border border-green-500/30 text-green-400 font-mono mt-1 resize-none transition-all duration-200 focus:border-green-400/70"
-                rows={3}
-                placeholder="// personal memory or note..."
+                className="w-full bg-black border border-green-500/30 text-green-400 font-mono p-2 mt-1 min-h-[80px]"
+                placeholder="Initial thoughts..."
               />
             </div>
-            <div className="flex gap-2 pt-2">
+
+            <div className="flex justify-end gap-2 pt-4">
               <Button
-                onClick={handleAddMemory}
-                disabled={isLoading}
-                className="bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 font-mono transition-all duration-200 hover:scale-105 disabled:opacity-50"
+                onClick={() => setIsAddingMemory(false)}
+                className="bg-transparent border border-green-500/30 text-green-400 hover:bg-green-500/10"
               >
-                {isLoading ? "SAVING..." : "SAVE_FILE"}
+                ABORT
               </Button>
               <Button
-                variant="ghost"
-                className="border border-red-500/50 text-red-400 hover:bg-red-500/20 font-mono transition-all duration-200 hover:scale-105"
-                onClick={() => {
-                  setIsAddingMemory(false)
-                  setSelectedGameData(null)
-                  setGameSearchResults([])
-                  setGameSearchQuery("")
-                }}
+                onClick={handleAddMemory}
+                disabled={!newMemory.title || isLoading}
+                className="bg-green-500/20 border border-green-500 text-green-400 hover:bg-green-500/40"
               >
-                CANCEL
+                {isLoading ? "WRITING..." : "INITIALIZE_MEMORY"}
               </Button>
             </div>
           </div>
